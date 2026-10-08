@@ -1,11 +1,14 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <math.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include "shaders.hpp"
+#include "camera.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -13,7 +16,9 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-// g++ src/main.cpp src/glad.c -Iinclude/ -Llib -lglfw3 -lopengl32 -lgdi32 && main
+Camera camera = Camera(30.0f, glm::vec3(0,0,5.0f));
+
+// g++ src/main.cpp src/glad.c src/utils/shaders.cpp -Iinclude/ -Llib -lglfw3 -lopengl32 -lgdi32 -o main && main
 
 int main()
 {
@@ -42,44 +47,87 @@ int main()
     Shader testShader = Shader("src/shaders/vertex.glsl","src/shaders/frag.glsl");
 
     float vertices[] = {
-         0.5f,  0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        -0.5f,  0.5f, 0.0f
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f, 
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+
+        -0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f, -0.5f,
+
+        -0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
     };
-    unsigned int indices[] = {
-        0, 1, 3,
-        1, 2, 3
-    };
-    unsigned int VBO, VAO, EBO;
+
+    unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
-    glBindVertexArray(0); 
-    
+    glBindVertexArray(0);
+
+    glm::mat4 projection = glm::mat4(1.0f);
+    projection = glm::perspective(glm::radians(camera.fov), 800.0f/600.0f, 0.1f, 100.0f);
+    glm::mat4 view;
+    view = glm::lookAt(camera.position,camera.position + camera.direction, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, 35.0f, glm::vec3(0.0f, 1.0f, 0.0f)); 
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    float angle = 0;
     while (!glfwWindowShouldClose(window))
     {
+
+        view = glm::lookAt(camera.position,camera.position + camera.direction, glm::vec3(0.0f, 1.0f, 0.0f));
         processInput(window);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
         glUseProgram(testShader.shaderProgram);
-        // glUniform1f(glGetUniformLocation(testShader.shaderProgram, "someValue"), sinf(glfwGetTime()));
+        testShader.setUniform("model", model);
+        testShader.setUniform("projection",projection);
+        testShader.setUniform("view", view);
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
  
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -87,7 +135,6 @@ int main()
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
     glDeleteProgram(testShader.shaderProgram);
 
     glfwTerminate();
@@ -98,6 +145,18 @@ void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        camera.position += (camera.direction * 0.01f);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        camera.position -= (camera.direction * 0.01f);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        camera.position.x += 0.01;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        camera.position.x -= 0.01;
+    }
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)

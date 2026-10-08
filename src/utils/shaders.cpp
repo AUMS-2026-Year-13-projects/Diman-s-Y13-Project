@@ -6,6 +6,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/gtc/type_ptr.hpp>
 
 std::string readFile(const char* filePath) {
     std::ifstream ReadFunction;
@@ -18,8 +19,10 @@ std::string readFile(const char* filePath) {
 }
 
 Shader::Shader(const char* vertexFp, const char* fragmentFp) {
-    const char* vertexFpp = readFile(vertexFp).c_str();
-    const char* fragmentFpp = readFile(fragmentFp).c_str();
+    std::string strVertex = readFile(vertexFp);
+    std::string strFragment = readFile(fragmentFp);
+    const char* vertexFpp = strVertex.c_str();
+    const char* fragmentFpp = strFragment.c_str();
 
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexFpp, NULL);
@@ -52,4 +55,8 @@ Shader::Shader(const char* vertexFp, const char* fragmentFp) {
     }
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+}
+
+void Shader::setUniform(const char* name, glm::mat4 mat4) {
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, name), 1, GL_FALSE, glm::value_ptr(mat4));
 }
