@@ -12,4 +12,7 @@ Camera::Camera(float f, glm::vec3 pos) {
     direction = glm::vec3(0,0,-1);
     position = pos;
     fov = f;
+    yaw = 0;
+    pitch = 0;
+    right = glm::vec3(0,1,0);
 }

@@ -9,8 +9,11 @@ class Camera {
     public:
         Camera(float fov, glm::vec3 pos);
         float fov;
+        float yaw;
+        float pitch;
         glm::vec3 position;
         glm::vec3 direction;
+        glm::vec3 right;
 };
 
 #endif
