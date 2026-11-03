@@ -1,6 +1,6 @@
 #ifndef PERLIN_HPP
 #define PERLIN_HPP
 
-float perlin(float x, float y);
+float perlina(float x, float y, float cell_size);
 
 #endif

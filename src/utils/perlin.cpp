@@ -1,34 +1,88 @@
 #include "perlin.hpp"
 #include <glm/glm.hpp>
-#include <random.hpp>
+#include <glm/gtc/random.hpp>
 #include <vector>
+#include <random>
+#include <iostream>
 
-uint32_t hash(uint32_t x) {
-    x = ((x >> 16) ^ x) * 0x45d9f3bu;
-    x = ((x >> 16) ^ x) * 0x45d9f3bu;
-    x = (x >> 16) ^ x;
-    return x;
+#include <random>
+#include <cmath>
+#include <glm/glm.hpp>
+
+glm::vec2 hash(glm::vec2 v)
+{
+    std::srand(v.x * 374761393 + v.y * 668265263);
+    std::vector<glm::vec2> gradient_vectors = {
+        glm::vec2(1,1),
+        glm::vec2(-1,1),
+        glm::vec2(1,-1),
+        glm::vec2(-1, -1),
+    };
+
+    return gradient_vectors[rand() % 4];
 }
 
+float ease_function(float t) {
+    return t*t*t*(t*(t*6 - 15) + 10);
+}
 
-float perlin(float x, float y) {
-    glm::vec2 normalized_coords = glm::normalize(glm::vec2(x,y));
-    std::vector<glm::vec2> gradients; 
-    std::vector<glm::vec2> direction;
-    gradients.push_back(glm::normalize(glm::vec2(hash(normalized_coords.x), hash(normalized_coords.y))));
-    gradients.push_back(glm::normalize(glm::vec2(hash(normalized_coords.x+1), hash(normalized_coords.y))));
-    gradients.push_back(glm::normalize(glm::vec2(hash(normalized_coords.x), hash(normalized_coords.y+1))));
-    gradients.push_back(glm::normalize(glm::vec2(hash(normalized_coords.x+1), hash(normalized_coords.y+1))));
+float lerp(float a, float b, float t) {
+    return a + t * (b-a);
+}
 
-    direction.push_back(normalized_coords);
-    direction.push_back(normalized_coords - glm::vec2(1,0));
-    direction.push_back(normalized_coords - glm::vec2(0,1));
-    direction.push_back(normalized_coords - glm::vec2(1,1));
+// float perlina(float x, float y, float cell_size) {
+//     glm::vec2 original_coords = glm::vec2(x,y);
+//     glm::vec2 normalized_coords = glm::normalize(original_coords);
+//     // glm::vec2 normalized_coords = glm::vec2(x / glm::length(original_coords) * cell_size, y / glm::length(original_coords) * cell_size);
+//     std::vector<glm::vec2> gradients; 
+//     std::vector<glm::vec2> direction;
+//     gradients.push_back(hash(glm::vec2(normalized_coords.x, normalized_coords.y)));
+//     gradients.push_back(hash(glm::vec2(normalized_coords.x+cell_size, normalized_coords.y)));
+//     gradients.push_back(hash(glm::vec2(normalized_coords.x, normalized_coords.y+cell_size)));
+//     gradients.push_back(hash(glm::vec2(normalized_coords.x+cell_size, normalized_coords.y+cell_size)));
+
+//     // std::cout << hash(glm::vec2(normalized_coords.x, normalized_coords.y+1)).x << "\n";
+
+//     direction.push_back(normalized_coords);
+//     direction.push_back(normalized_coords - glm::vec2(cell_size,0));
+//     direction.push_back(normalized_coords - glm::vec2(0,cell_size));
+//     direction.push_back(normalized_coords - glm::vec2(cell_size));
+
+//     std::vector<float> dots;
+//     for (int i = 0; i<4; i++) {
+//         dots.push_back(glm::dot(gradients[0], direction[0]));
+//     }
+
+//     float u = ease_function(normalized_coords.x);
+//     float v = ease_function(normalized_coords.y);
+//     return lerp(lerp(dots[0], dots[1], u), lerp(dots[2], dots[3], v),y);
+// };
+
+float perlina(float x, float y, float cell_size) {
+    glm::vec2 cell_coords = glm::vec2(glm::floor(x/cell_size), glm::floor(y/cell_size));
+    glm::vec2 local_coords = glm::vec2(x/cell_size - cell_coords.x, y/cell_size - cell_coords.y);
+
+    std::vector<glm::vec2> corners = {
+        glm::vec2(cell_coords.x, cell_coords.y),
+        glm::vec2(cell_coords.x, cell_coords.y + 1),
+        glm::vec2(cell_coords.x + 1, cell_coords.y),
+        glm::vec2(cell_coords.x+1, cell_coords.y+1)
+    };
 
     std::vector<float> dots;
     for (int i = 0; i<4; i++) {
-        dots.push_back(glm::dot(gradients[0], direction[0]));
+        glm::vec2 grad = hash(corners[i]);
+        glm::vec2 d = glm::vec2(local_coords.x - (corners[i].x - cell_coords.x), local_coords.y - (corners[i].y - cell_coords.y));
+
+        dots.push_back(glm::dot(grad, d));
     }
 
+    float fx = ease_function(local_coords.x);
+    float fy = ease_function(local_coords.y);
 
-};
+    float l = dots[0] + fx * (dots[2] - dots[0]);
+    float u = dots[1] + fx * (dots[3] - dots[1]);
+
+    float noise = l + fy * (u-l);
+    return (noise + 1) / 2;
+}

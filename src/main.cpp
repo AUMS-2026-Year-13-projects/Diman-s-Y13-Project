@@ -3,12 +3,14 @@
 #include <math.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/noise.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include "shaders.hpp"
 #include "camera.hpp"
+#include "perlin.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -139,27 +141,61 @@ int main()
     glm::mat4 model = glm::mat4(1.0f);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glCullFace(GL_BACK);
     glfwSetCursorPosCallback(window, mouse_callback);  
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 
     float angle = 0;
+    float lastFrame = 0.0f;
+    float deltaTime = 0.0f;
+
     while (!glfwWindowShouldClose(window))
     {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame; 
+        float speed = 5.5f * deltaTime;
+
         view = glm::lookAt(camera.position,camera.position + camera.direction, glm::vec3(0.0f, 1.0f, 0.0f));
-        processInput(window);
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            glm::vec3 tempDir = glm::normalize(glm::vec3(camera.direction.x, 0, camera.direction.z));
+            camera.position += (tempDir * speed);
+        }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            glm::vec3 tempDir = glm::normalize(glm::vec3(camera.direction.x, 0, camera.direction.z));
+            camera.position -= (tempDir * speed);
+        }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            camera.position += (camera.right * speed);
+        }
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            camera.position -= (camera.right * speed);
+        }
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+            camera.position.y += speed;
+        }
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+            camera.position.y -= speed;
+        }
 
         camera.right = glm::normalize(glm::cross(camera.direction, glm::vec3(0,1,0)));
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glBindVertexArray(VAO);
-        for (int i = 0; i<10; i++) {
-            model = glm::mat4(1);
-            model = glm::translate(model, glm::vec3(i, 1,1));
-            glUseProgram(testShader.shaderProgram);
-            testShader.setUniform("model", model);
-            testShader.setUniform("projection",projection);
-            testShader.setUniform("view", view);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (int x=camera.position.x-50; x<camera.position.x+50; x++) {
+            for (int z=camera.position.z-50; z<camera.position.z+50; z++) {
+                model = glm::mat4(1);
+                model = glm::translate(model, glm::vec3(x,glm::floor(perlina(x,z,100)*10),z));
+                // std::cout << perlina(x,z)*10 << std::endl;
+                // model = glm::translate(model, glm::vec3(x,1,z));
+                glUseProgram(testShader.shaderProgram);
+                testShader.setUniform("model", model);
+                testShader.setUniform("projection",projection);
+                testShader.setUniform("view", view);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
         }
 
         glfwSwapBuffers(window);
@@ -172,32 +208,6 @@ int main()
 
     glfwTerminate();
     return 0;
-}
-
-void processInput(GLFWwindow *window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        glm::vec3 tempDir = glm::normalize(glm::vec3(camera.direction.x, 0, camera.direction.z));
-        camera.position += (tempDir * 0.01f);
-    }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        glm::vec3 tempDir = glm::normalize(glm::vec3(camera.direction.x, 0, camera.direction.z));
-        camera.position -= (tempDir * 0.01f);
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        camera.position += (camera.right * 0.01f);
-    }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        camera.position -= (camera.right * 0.01f);
-    }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        camera.position.y += 0.01;
-    }
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
-        camera.position.y -= 0.01;
-    }
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
