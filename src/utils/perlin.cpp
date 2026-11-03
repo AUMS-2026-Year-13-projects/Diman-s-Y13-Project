@@ -9,9 +9,9 @@
 #include <cmath>
 #include <glm/glm.hpp>
 
-glm::vec2 hash(glm::vec2 v)
+glm::vec2 hash(glm::vec2 v, float seed)
 {
-    std::srand(v.x * 374761393 + v.y * 668265263);
+    std::srand((v.x * 374761393 + v.y * 668265263) * seed);
     std::vector<glm::vec2> gradient_vectors = {
         glm::vec2(1,1),
         glm::vec2(-1,1),
@@ -58,7 +58,7 @@ float lerp(float a, float b, float t) {
 //     return lerp(lerp(dots[0], dots[1], u), lerp(dots[2], dots[3], v),y);
 // };
 
-float perlina(float x, float y, float cell_size) {
+float perlina(float x, float y, float cell_size, float seed) {
     glm::vec2 cell_coords = glm::vec2(glm::floor(x/cell_size), glm::floor(y/cell_size));
     glm::vec2 local_coords = glm::vec2(x/cell_size - cell_coords.x, y/cell_size - cell_coords.y);
 
@@ -71,7 +71,7 @@ float perlina(float x, float y, float cell_size) {
 
     std::vector<float> dots;
     for (int i = 0; i<4; i++) {
-        glm::vec2 grad = hash(corners[i]);
+        glm::vec2 grad = hash(corners[i], seed);
         glm::vec2 d = glm::vec2(local_coords.x - (corners[i].x - cell_coords.x), local_coords.y - (corners[i].y - cell_coords.y));
 
         dots.push_back(glm::dot(grad, d));
@@ -85,4 +85,20 @@ float perlina(float x, float y, float cell_size) {
 
     float noise = l + fy * (u-l);
     return (noise + 1) / 2;
-}
+};
+
+float octavesperlin(float x, float y, float cell_size, float octaves, float persistence, float seed) {
+    float total = 0;
+    float amplitude = 2;
+    float frequency = 1;
+    float max_value = 0;
+    for (int i = 0; i<octaves; i++) {
+        total += perlina(x * frequency, y * frequency, cell_size, seed) * amplitude;
+
+        max_value += amplitude;
+        amplitude*=persistence;
+        frequency *= 2; 
+    }
+
+    return total/max_value;
+};

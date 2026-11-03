@@ -22,7 +22,7 @@ float lastY = SCR_HEIGHT/2;
 
 Camera camera = Camera(90.0f, glm::vec3(0,0,5.0f));
 
-// g++ src/main.cpp src/glad.c src/utils/shaders.cpp src/utils/camera.cpp -Iinclude/ -Llib -lglfw3 -lopengl32 -lgdi32 -o main && main
+// g++ src/main.cpp src/glad.c src/utils/shaders.cpp src/utils/camera.cpp src/utils/perlin.cpp -Iinclude/ -Llib -lglfw3 -lopengl32 -lgdi32 -o main && main
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
@@ -119,6 +119,15 @@ int main()
         -0.5f,  0.5f, -0.5f,
     };
 
+    // float vertices[] = {
+    //     -0.5f, 0, -0.5f,
+    //      0.5f, 0, -0.5f,
+    //      0.5f, 0, 0.5f,
+    //      0.5f, 0, 0.5f, 
+    //     -0.5f, 0, 0.5f,
+    //     -0.5f, 0, -0.5f,
+    // };
+
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -148,6 +157,10 @@ int main()
     float angle = 0;
     float lastFrame = 0.0f;
     float deltaTime = 0.0f;
+    
+    float cell_size = 1;
+    float octaves = 1;
+    float seed = 1;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -179,6 +192,18 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
             camera.position.y -= speed;
         }
+        if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+            cell_size+=1;
+        }
+        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+            cell_size-=1;
+        }
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+            octaves += 1;
+        }
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+            octaves -= 1;
+        }
 
         camera.right = glm::normalize(glm::cross(camera.direction, glm::vec3(0,1,0)));
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -187,7 +212,7 @@ int main()
         for (int x=camera.position.x-50; x<camera.position.x+50; x++) {
             for (int z=camera.position.z-50; z<camera.position.z+50; z++) {
                 model = glm::mat4(1);
-                model = glm::translate(model, glm::vec3(x,glm::floor(perlina(x,z,100)*10),z));
+                model = glm::translate(model, glm::vec3(x,octavesperlin(x,z,cell_size, octaves, 10, seed)*10,z));
                 // std::cout << perlina(x,z)*10 << std::endl;
                 // model = glm::translate(model, glm::vec3(x,1,z));
                 glUseProgram(testShader.shaderProgram);
