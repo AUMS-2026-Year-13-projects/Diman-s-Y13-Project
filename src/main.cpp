@@ -11,6 +11,9 @@
 #include "shaders.hpp"
 #include "camera.hpp"
 #include "perlin.hpp"
+#include "imgui/imgui.h"
+#include "imgui/backends/imgui_impl_glfw.h"
+#include "imgui/backends/imgui_impl_opengl3.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -22,7 +25,7 @@ float lastY = SCR_HEIGHT/2;
 
 Camera camera = Camera(90.0f, glm::vec3(0,0,5.0f));
 
-// g++ src/main.cpp src/glad.c src/utils/shaders.cpp src/utils/camera.cpp src/utils/perlin.cpp -Iinclude/ -Llib -lglfw3 -lopengl32 -lgdi32 -o main && main
+// g++ src/main.cpp src/glad.c src/utils/shaders.cpp src/utils/camera.cpp src/utils/perlin.cpp include/imgui/imgui.cpp include/imgui/imgui_draw.cpp include/imgui/imgui_tables.cpp include/imgui/imgui_widgets.cpp include/imgui/backends/imgui_impl_glfw.cpp include/imgui/backends/imgui_impl_opengl3.cpp -Iinclude/ -Iinclude/imgui/ -Iinclude/imgui/backends/ -Llib -lglfw3 -lopengl32 -lgdi32 -o main.exe && main.exe
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
@@ -73,6 +76,26 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.WantCaptureMouse = true;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+    //style.FontSizeBase = 16.0f;           // Default to 13.0f when unspecified, which allows crisp legacy font for non-4K screens.
+    style.FrameRounding = 3.0f;
+    style.GrabRounding = 3.0f;
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    const char* glsl_version = nullptr;
+    ImGui_ImplOpenGL3_Init(glsl_version);
 
     Shader testShader = Shader("src/shaders/vertex.glsl","src/shaders/frag.glsl");
     float vertices[] = {
@@ -158,9 +181,19 @@ int main()
     float lastFrame = 0.0f;
     float deltaTime = 0.0f;
     
-    float cell_size = 1;
+    static float cell_size = 1;
     float octaves = 1;
     float seed = 1;
+
+    std::vector<float> saved_world;
+    
+    // for (int x=camera.position.x-50; x<camera.position.x+50; x+=1) {
+    //     for (int z=camera.position.z-50; z<camera.position.z+50; z+=1) {
+    //         glm::vec2 chunk_coords = glm::vec2((int)x/8,(int)z/8);
+    //     }
+    // }
+
+    bool toggle_mouse = false;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -192,27 +225,26 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
             camera.position.y -= speed;
         }
-        if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
-            cell_size+=1;
-        }
-        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
-            cell_size-=1;
-        }
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-            octaves += 1;
-        }
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            octaves -= 1;
+        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+            if (toggle_mouse == true) {
+                glfwSetCursorPosCallback(window, mouse_callback);  
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+            } else {
+                glfwSetCursorPosCallback(window, nullptr);  
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);  
+            }
+            toggle_mouse = !toggle_mouse;
         }
 
         camera.right = glm::normalize(glm::cross(camera.direction, glm::vec3(0,1,0)));
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glBindVertexArray(VAO);
-        for (int x=camera.position.x-50; x<camera.position.x+50; x++) {
-            for (int z=camera.position.z-50; z<camera.position.z+50; z++) {
+        for (int x=camera.position.x-50; x<camera.position.x+50; x+=1) {
+            for (int z=camera.position.z-50; z<camera.position.z+50; z+=1) {
+                glm::vec2 chunk_coords = glm::vec2((int)x/8,(int)z/8);
                 model = glm::mat4(1);
-                model = glm::translate(model, glm::vec3(x,octavesperlin(x,z,cell_size, octaves, 10, seed)*10,z));
+                model = glm::translate(model, glm::vec3(x,octavesperlin(x,z,cell_size, octaves, 0.9, seed)*10,z));
                 // std::cout << perlina(x,z)*10 << std::endl;
                 // model = glm::translate(model, glm::vec3(x,1,z));
                 glUseProgram(testShader.shaderProgram);
@@ -223,6 +255,19 @@ int main()
             }
         }
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Perlin noise configuration");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+
+        ImGui::SliderFloat("Scale", &cell_size, 1.0f, 100.0f);
+
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -230,6 +275,10 @@ int main()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteProgram(testShader.shaderProgram);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwTerminate();
     return 0;

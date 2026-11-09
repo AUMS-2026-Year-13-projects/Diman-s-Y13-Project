@@ -30,34 +30,6 @@ float lerp(float a, float b, float t) {
     return a + t * (b-a);
 }
 
-// float perlina(float x, float y, float cell_size) {
-//     glm::vec2 original_coords = glm::vec2(x,y);
-//     glm::vec2 normalized_coords = glm::normalize(original_coords);
-//     // glm::vec2 normalized_coords = glm::vec2(x / glm::length(original_coords) * cell_size, y / glm::length(original_coords) * cell_size);
-//     std::vector<glm::vec2> gradients; 
-//     std::vector<glm::vec2> direction;
-//     gradients.push_back(hash(glm::vec2(normalized_coords.x, normalized_coords.y)));
-//     gradients.push_back(hash(glm::vec2(normalized_coords.x+cell_size, normalized_coords.y)));
-//     gradients.push_back(hash(glm::vec2(normalized_coords.x, normalized_coords.y+cell_size)));
-//     gradients.push_back(hash(glm::vec2(normalized_coords.x+cell_size, normalized_coords.y+cell_size)));
-
-//     // std::cout << hash(glm::vec2(normalized_coords.x, normalized_coords.y+1)).x << "\n";
-
-//     direction.push_back(normalized_coords);
-//     direction.push_back(normalized_coords - glm::vec2(cell_size,0));
-//     direction.push_back(normalized_coords - glm::vec2(0,cell_size));
-//     direction.push_back(normalized_coords - glm::vec2(cell_size));
-
-//     std::vector<float> dots;
-//     for (int i = 0; i<4; i++) {
-//         dots.push_back(glm::dot(gradients[0], direction[0]));
-//     }
-
-//     float u = ease_function(normalized_coords.x);
-//     float v = ease_function(normalized_coords.y);
-//     return lerp(lerp(dots[0], dots[1], u), lerp(dots[2], dots[3], v),y);
-// };
-
 float perlina(float x, float y, float cell_size, float seed) {
     glm::vec2 cell_coords = glm::vec2(glm::floor(x/cell_size), glm::floor(y/cell_size));
     glm::vec2 local_coords = glm::vec2(x/cell_size - cell_coords.x, y/cell_size - cell_coords.y);
@@ -89,15 +61,14 @@ float perlina(float x, float y, float cell_size, float seed) {
 
 float octavesperlin(float x, float y, float cell_size, float octaves, float persistence, float seed) {
     float total = 0;
-    float amplitude = 2;
+    float amplitude = 3;
     float frequency = 1;
     float max_value = 0;
     for (int i = 0; i<octaves; i++) {
         total += perlina(x * frequency, y * frequency, cell_size, seed) * amplitude;
-
         max_value += amplitude;
         amplitude*=persistence;
-        frequency *= 2; 
+        frequency *= 0.6; 
     }
 
     return total/max_value;
