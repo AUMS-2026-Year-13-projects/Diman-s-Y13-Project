@@ -174,8 +174,8 @@ int main()
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glCullFace(GL_BACK);
-    glfwSetCursorPosCallback(window, mouse_callback);  
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+    // glfwSetCursorPosCallback(window, mouse_callback);  
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 
     float angle = 0;
     float lastFrame = 0.0f;
@@ -194,6 +194,8 @@ int main()
     // }
 
     bool toggle_mouse = false;
+    float max_height = 1.0f;
+    float percistence = 0.1f;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -225,16 +227,16 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
             camera.position.y -= speed;
         }
-        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-            if (toggle_mouse == true) {
-                glfwSetCursorPosCallback(window, mouse_callback);  
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
-            } else {
-                glfwSetCursorPosCallback(window, nullptr);  
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);  
-            }
-            toggle_mouse = !toggle_mouse;
-        }
+        // if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+        //     if (toggle_mouse == true) {
+        //         glfwSetCursorPosCallback(window, mouse_callback);
+        //         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+        //     } else {
+        //         glfwSetCursorPosCallback(window, nullptr);  
+        //         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);  
+        //     }
+        //     toggle_mouse = !toggle_mouse;
+        // }
 
         camera.right = glm::normalize(glm::cross(camera.direction, glm::vec3(0,1,0)));
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -244,7 +246,7 @@ int main()
             for (int z=camera.position.z-50; z<camera.position.z+50; z+=1) {
                 glm::vec2 chunk_coords = glm::vec2((int)x/8,(int)z/8);
                 model = glm::mat4(1);
-                model = glm::translate(model, glm::vec3(x,octavesperlin(x,z,cell_size, octaves, 0.9, seed)*10,z));
+                model = glm::translate(model, glm::vec3(x,octavesperlin(x,z,cell_size, octaves, percistence, seed)*max_height,z));
                 // std::cout << perlina(x,z)*10 << std::endl;
                 // model = glm::translate(model, glm::vec3(x,1,z));
                 glUseProgram(testShader.shaderProgram);
@@ -260,9 +262,11 @@ int main()
         ImGui::NewFrame();
 
         ImGui::Begin("Perlin noise configuration");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-
         ImGui::SliderFloat("Scale", &cell_size, 1.0f, 100.0f);
-
+        ImGui::SliderFloat("Octaves", &octaves, 1.0f, 10.0f);
+        ImGui::SliderFloat("Max height", &max_height, 1.0f, 100.0f);
+        ImGui::SliderFloat("Percistence", &percistence, 1.0f, 64.0f);
+        ImGui::SliderFloat("Seed", &seed, 1.0f, 64.0f);
         ImGui::End();
 
         ImGui::Render();
