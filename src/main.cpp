@@ -82,14 +82,14 @@ int main()
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.WantCaptureMouse = true;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
     // Setup Dear ImGui style
     ImGuiStyle& style = ImGui::GetStyle();
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
-    //style.FontSizeBase = 16.0f;           // Default to 13.0f when unspecified, which allows crisp legacy font for non-4K screens.
+    //style.FontSizeBase = 16.0f;
     style.FrameRounding = 3.0f;
     style.GrabRounding = 3.0f;
 
@@ -98,49 +98,45 @@ int main()
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     Shader testShader = Shader("src/shaders/vertex.glsl","src/shaders/frag.glsl");
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f, 
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
 
-        -0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f, -0.5f,
-
-        -0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-    };
+float vertices[] = {
+    -0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f,  0.5f,  0.5f,
+};
 
     // float vertices[] = {
     //     -0.5f, 0, -0.5f,
@@ -187,7 +183,7 @@ int main()
 
     std::vector<float> saved_world;
     
-    // for (int x=camera.position.x-50; x<camera.position.x+50; x+=1) {
+    // for (int x=camera.position.x-50; x<camera.position.x+50; x+=1) (int){
     //     for (int z=camera.position.z-50; z<camera.position.z+50; z+=1) {
     //         glm::vec2 chunk_coords = glm::vec2((int)x/8,(int)z/8);
     //     }
@@ -196,6 +192,8 @@ int main()
     bool toggle_mouse = false;
     float max_height = 1.0f;
     float percistence = 0.1f;
+
+    glEnable(GL_CULL_FACE);  
 
     while (!glfwWindowShouldClose(window))
     {
@@ -227,16 +225,16 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
             camera.position.y -= speed;
         }
-        // if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-        //     if (toggle_mouse == true) {
-        //         glfwSetCursorPosCallback(window, mouse_callback);
-        //         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
-        //     } else {
-        //         glfwSetCursorPosCallback(window, nullptr);  
-        //         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);  
-        //     }
-        //     toggle_mouse = !toggle_mouse;
-        // }
+        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+            if (toggle_mouse == true) {
+                glfwSetCursorPosCallback(window, mouse_callback);
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+            } else {
+                glfwSetCursorPosCallback(window, nullptr);  
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            }
+            toggle_mouse = !toggle_mouse;
+        }
 
         camera.right = glm::normalize(glm::cross(camera.direction, glm::vec3(0,1,0)));
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -261,7 +259,7 @@ int main()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("Perlin noise configuration");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+        ImGui::Begin("Perlin noise configuration");
         ImGui::SliderFloat("Scale", &cell_size, 1.0f, 100.0f);
         ImGui::SliderFloat("Octaves", &octaves, 1.0f, 10.0f);
         ImGui::SliderFloat("Max height", &max_height, 1.0f, 100.0f);
